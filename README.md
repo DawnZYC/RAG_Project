@@ -96,8 +96,8 @@ RAGProject/
 ### 1. 克隆项目，创建环境
 
 ```bash
-git clone <your-repo-url>
-cd RAGProject
+git clone https://github.com/DawnZYC/RAG_Project.git
+cd RAG_Project
 
 conda create -n rag python=3.11 -y
 conda activate rag
@@ -125,6 +125,16 @@ docker-compose up --build
 ```
 
 服务启动后访问 `http://localhost:8000/docs` 可以看到交互式 API 文档。
+
+### 5. 使用前端测试面板
+
+直接用浏览器打开项目根目录下的 `frontend.html`，无需额外依赖。
+
+功能包括：
+- 拖拽或点击上传文档
+- 输入问题，支持 `Cmd+Enter` 快速提交
+- 显示回答、引用来源、相关度分数和耗时
+- 拒答时显示橙色提示和拒答原因
 
 ---
 
