@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG 测试面板</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #111;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #444;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .stat {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .stat span {
+      font-weight: 600;
+      color: #111;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-danger  { background: #dc2626; color: #fff; }
+    .btn-ghost   { background: #f0f0f0; color: #333; }
+
+    /* Upload */
+    .upload-area {
+      border: 2px dashed #d0d0d0;
+      border-radius: 6px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      margin-bottom: 12px;
+    }
+
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: #2563eb;
+    }
+
+    .upload-area p { font-size: 14px; color: #888; margin-top: 6px; }
+
+    #file-input { display: none; }
+
+    .file-name {
+      font-size: 13px;
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+
+    /* Query */
+    textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+
+    textarea:focus { outline: none; border-color: #2563eb; }
+
+    .query-options {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .query-options label { font-size: 13px; color: #666; }
+
+    .query-options input[type="number"] {
+      width: 60px;
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .query-options input[type="text"] {
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      width: 180px;
+    }
+
+    /* Result */
+    .result-box {
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .refused {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
+
+    .sources-list {
+      margin-top: 14px;
+    }
+
+    .sources-list h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .source-item {
+      background: #f0f4ff;
+      border-left: 3px solid #2563eb;
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .source-item .source-meta {
+      color: #2563eb;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .source-item .source-excerpt {
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .latency {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .toast.show { opacity: 1; }
+    .toast.success { background: #16a34a; }
+    .toast.error   { background: #dc2626; }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>RAG 测试面板</h1>
+
+  <!-- Stats -->
+  <div class="card">
+    <h2>系统状态</h2>
+    <div class="stats-bar">
+      <div class="stat">向量库 chunk 数：<span id="chunk-count">-</span></div>
+      <div class="stat">嵌入模型：<span id="model-name">-</span></div>
+      <button class="btn btn-ghost" onclick="loadStats()">刷新</button>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <h2>上传文档</h2>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <div style="font-size: 28px;">📄</div>
+      <p>点击选择文件，或拖拽文件到此处</p>
+      <p>支持：PDF、DOCX、XLSX、CSV、TXT、MD</p>
+    </div>
+    <input type="file" id="file-input" accept=".pdf,.docx,.xlsx,.csv,.txt,.md">
+    <div class="file-name" id="file-name"></div>
+    <button class="btn btn-primary" id="ingest-btn" onclick="ingestFile()" disabled>上传并 Ingest</button>
+  </div>
+
+  <!-- Query -->
+  <div class="card">
+    <h2>提问</h2>
+    <textarea id="question" placeholder="输入你的问题..."></textarea>
+    <div class="query-options">
+      <label>Top K：<input type="number" id="top-k" value="5" min="1" max="20"></label>
+      <label>限定文件：<input type="text" id="filter-source" placeholder="可选，如 report.pdf"></label>
+    </div>
+    <button class="btn btn-primary" id="query-btn" onclick="queryRAG()">提问</button>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="result-card" style="display:none;">
+    <h2>回答</h2>
+    <div class="result-box" id="result-box"></div>
+    <div class="sources-list" id="sources-list"></div>
+    <div class="latency" id="latency"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = "http://localhost:8000/api/v1";
+
+  // ── 工具函数 ──────────────────────────────────────────────────────────────
+
+  function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = "toast", 2500);
+  }
+
+  function setLoading(btnId, loading, originalText) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? `<span class="loading"></span>处理中...`
+      : originalText;
+  }
+
+  // ── 系统状态 ──────────────────────────────────────────────────────────────
+
+  async function loadStats() {
+    try {
+      const res  = await fetch(`${API}/stats`);
+      const data = await res.json();
+      document.getElementById("chunk-count").textContent = data.total_chunks;
+      document.getElementById("model-name").textContent  = data.model;
+    } catch {
+      document.getElementById("chunk-count").textContent = "无法连接服务";
+    }
+  }
+
+  // ── 文件选择 ──────────────────────────────────────────────────────────────
+
+  document.getElementById("file-input").addEventListener("change", function () {
+    const file = this.files[0];
+    if (file) {
+      document.getElementById("file-name").textContent = `已选择：${file.name}`;
+      document.getElementById("ingest-btn").disabled = false;
+    }
+  });
+
+  // 拖拽上传
+  const uploadArea = document.getElementById("upload-area");
+  uploadArea.addEventListener("dragover", e => {
+    e.preventDefault();
+    uploadArea.classList.add("drag-over");
+  });
+  uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("drag-over"));
+  uploadArea.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadArea.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      document.getElementById("file-input").files = e.dataTransfer.files;
+      document.getElementById("file-name").textContent = `已选择：${file.name}`;
+      document.getElementById("ingest-btn").disabled = false;
+    }
+  });
+
+  // ── Ingest ────────────────────────────────────────────────────────────────
+
+  async function ingestFile() {
+    const file = document.getElementById("file-input").files[0];
+    if (!file) return;
+
+    setLoading("ingest-btn", true);
+
+    const form = new FormData();
+    form.append("file", file);
+
+    try {
+      const res  = await fetch(`${API}/ingest`, { method: "POST", body: form });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast(`✅ ${data.filename} 已 ingest，共 ${data.chunks_added} 个 chunk`);
+        loadStats();
+      } else {
+        showToast(`❌ ${data.detail}`, "error");
+      }
+    } catch (e) {
+      showToast("❌ 无法连接服务，请确认服务已启动", "error");
+    }
+
+    setLoading("ingest-btn", false, "上传并 Ingest");
+  }
+
+  // ── Query ─────────────────────────────────────────────────────────────────
+
+  async function queryRAG() {
+    const question = document.getElementById("question").value.trim();
+    if (!question) { showToast("请输入问题", "error"); return; }
+
+    setLoading("query-btn", true);
+    document.getElementById("result-card").style.display = "none";
+
+    const body = {
+      question,
+      top_k: parseInt(document.getElementById("top-k").value),
+      filter_source: document.getElementById("filter-source").value.trim() || null,
+    };
+
+    try {
+      const res  = await fetch(`${API}/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      document.getElementById("result-card").style.display = "block";
+
+      const resultBox = document.getElementById("result-box");
+      if (data.refused) {
+        resultBox.className = "result-box refused";
+        resultBox.textContent = `⚠️ 拒答\n\n${data.refuse_reason}`;
+      } else {
+        resultBox.className = "result-box";
+        resultBox.textContent = data.answer;
+      }
+
+      // 来源列表
+      const sourcesList = document.getElementById("sources-list");
+      if (data.sources && data.sources.length > 0) {
+        sourcesList.innerHTML = `<h3>引用来源</h3>` + data.sources.map(s => `
+          <div class="source-item">
+            <div class="source-meta">
+              📄 ${s.source}
+              ${s.page_num ? `· 第 ${s.page_num} 页` : ""}
+              ${s.section_title ? `· ${s.section_title}` : ""}
+              · 相关度 ${(s.score * 100).toFixed(1)}%
+            </div>
+            <div class="source-excerpt">${s.excerpt}</div>
+          </div>
+        `).join("");
+      } else {
+        sourcesList.innerHTML = "";
+      }
+
+      document.getElementById("latency").textContent = `耗时 ${data.latency_ms} ms`;
+
+    } catch (e) {
+      showToast("❌ 无法连接服务，请确认服务已启动", "error");
+    }
+
+    setLoading("query-btn", false, "提问");
+  }
+
+  // 回车提交
+  document.getElementById("question").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.metaKey) queryRAG();
+  });
+
+  // 初始化
+  loadStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      - CHROMA_DIR=/data/chroma
+      - PROCESSED_DIR=/data/processed
+      - DB_PATH=/data/logs/queries.db
+    volumes:
+      # 持久化向量库、分块文件、查询日志，重新部署后数据不丢失
+      - rag_chroma:/data/chroma
+      - rag_processed:/data/processed
+      - rag_logs:/data/logs
+    restart: unless-stopped
+
+volumes:
+  rag_chroma:
+  rag_processed:
+  rag_logs:
