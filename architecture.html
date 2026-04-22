@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Project — 系统架构</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #f7fafc;
+  }
+  .subtitle {
+    text-align: center;
+    color: #718096;
+    margin-bottom: 40px;
+    font-size: 0.9rem;
+  }
+
+  .badges {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .badge-green  { background: #1a3a2a; color: #48bb78; border: 1px solid #2d6a4a; }
+  .badge-blue   { background: #1a2a3a; color: #63b3ed; border: 1px solid #2d4a6a; }
+  .badge-purple { background: #2a1a3a; color: #b794f4; border: 1px solid #4a2d6a; }
+  .badge-orange { background: #3a2a1a; color: #f6ad55; border: 1px solid #6a4a2d; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .full-width { grid-column: 1 / -1; }
+
+  .card {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2d3748;
+  }
+  .card-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .icon-green  { background: #1a3a2a; }
+  .icon-blue   { background: #1a2a3a; }
+  .icon-purple { background: #2a1a3a; }
+  .icon-orange { background: #3a2a1a; }
+  .icon-teal   { background: #1a3a3a; }
+  .icon-red    { background: #3a1a1a; }
+  .icon-gray   { background: #2a2a2a; }
+
+  .card-title { font-size: 1rem; font-weight: 700; color: #f7fafc; }
+  .card-subtitle { font-size: 0.75rem; color: #718096; margin-top: 2px; }
+
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #0f1117;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #2d3748;
+  }
+  .step-num {
+    min-width: 22px; height: 22px;
+    background: #2d3748;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; color: #a0aec0;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-title { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 3px; }
+  .step-detail { font-size: 0.77rem; color: #718096; line-height: 1.5; }
+  .step-code {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.72rem; color: #68d391;
+    background: #0d1117; border-radius: 4px;
+    padding: 2px 6px; display: inline-block; margin-top: 4px;
+  }
+  .arrow-down { text-align: center; color: #4a5568; font-size: 0.9rem; line-height: 1; margin: -2px 0; }
+
+  .backends { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .backend-card {
+    background: #0f1117; border-radius: 8px; padding: 14px; border: 1px solid #2d3748;
+  }
+  .backend-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #2d3748; }
+  .native-title { color: #63b3ed; }
+  .llamaindex-title { color: #b794f4; }
+  .backend-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 4px 0; font-size: 0.75rem; border-bottom: 1px solid #1a1f2e; gap: 8px;
+  }
+  .backend-row:last-child { border-bottom: none; }
+  .brow-key { color: #718096; flex-shrink: 0; }
+  .brow-val { color: #e2e8f0; text-align: right; }
+  .brow-val code {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.7rem;
+    background: #1a1f2e; padding: 1px 5px; border-radius: 3px; color: #68d391;
+  }
+
+  .gen-modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .gen-mode { background: #0f1117; border-radius: 8px; padding: 12px; border: 1px solid #2d3748; }
+  .gen-mode-title { font-size: 0.78rem; font-weight: 700; margin-bottom: 8px; color: #f7fafc; }
+  .gen-mode ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .gen-mode li { font-size: 0.72rem; color: #a0aec0; padding-left: 12px; position: relative; }
+  .gen-mode li::before { content: "→"; position: absolute; left: 0; color: #4a5568; }
+
+  .refuse-gates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .gate { background: #0f1117; border-radius: 8px; padding: 14px; border: 1px solid #3a1a1a; }
+  .gate-title { font-size: 0.8rem; font-weight: 700; color: #fc8181; margin-bottom: 8px; }
+  .gate-body { font-size: 0.75rem; color: #a0aec0; line-height: 1.6; }
+  .gate-body code {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.7rem;
+    background: #1a1f2e; padding: 1px 5px; border-radius: 3px; color: #f6ad55;
+  }
+
+  .memory-flow { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .mem-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: #0f1117; border-radius: 8px; padding: 10px 14px; border: 1px solid #2a1a3a;
+  }
+  .mem-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .mem-body { flex: 1; }
+  .mem-title { font-size: 0.82rem; font-weight: 600; color: #e2e8f0; margin-bottom: 3px; }
+  .mem-detail { font-size: 0.75rem; color: #718096; line-height: 1.5; }
+  .mem-detail code {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.7rem;
+    background: #1a1f2e; padding: 1px 5px; border-radius: 3px; color: #b794f4;
+  }
+
+  .conv-example {
+    background: #0f1117; border: 1px solid #2a1a3a; border-radius: 8px; padding: 14px; margin-top: 12px;
+  }
+  .conv-label { font-size: 0.72rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .conv-turn { margin-bottom: 8px; font-size: 0.78rem; line-height: 1.5; }
+  .conv-q { color: #63b3ed; }
+  .conv-a { color: #68d391; }
+  .conv-rewrite { color: #b794f4; font-style: italic; }
+
+  .endpoints { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .endpoint {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: #0f1117; border-radius: 6px; border: 1px solid #2d3748;
+  }
+  .method {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.68rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px; min-width: 52px; text-align: center; flex-shrink: 0;
+  }
+  .method-post   { background: #1a3a1a; color: #68d391; }
+  .method-get    { background: #1a2a3a; color: #63b3ed; }
+  .method-delete { background: #3a1a1a; color: #fc8181; }
+  .ep-path { font-family: "SF Mono", Consolas, monospace; font-size: 0.75rem; color: #e2e8f0; }
+  .ep-desc { font-size: 0.73rem; color: #718096; margin-left: auto; }
+
+  .dataflow {
+    display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap;
+    overflow-x: auto; padding: 4px 0;
+  }
+  .df-node {
+    background: #0f1117; border: 1px solid #2d3748; border-radius: 8px;
+    padding: 10px 14px; text-align: center; min-width: 90px; flex-shrink: 0;
+  }
+  .df-node-title { font-size: 0.78rem; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+  .df-node-sub   { font-size: 0.68rem; color: #718096; }
+  .df-arrow { display: flex; align-items: center; padding: 0 4px; color: #4a5568; font-size: 1rem; flex-shrink: 0; }
+
+  .log-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+  .log-field { background: #0f1117; border-radius: 6px; padding: 8px 12px; border: 1px solid #2d3748; font-size: 0.75rem; }
+  .lf-key { color: #f6ad55; font-family: "SF Mono", Consolas, monospace; font-size: 0.7rem; }
+  .lf-val { color: #718096; margin-top: 2px; }
+
+  .phases { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .phase { background: #0f1117; border-radius: 8px; padding: 14px; border: 1px solid #2d3748; }
+  .phase-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .phase-num { font-size: 0.75rem; font-weight: 700; color: #a0aec0; }
+  .phase-status { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; margin-left: auto; }
+  .status-done { background: #1a3a2a; color: #48bb78; }
+  .status-todo { background: #2a2a2a; color: #718096; }
+  .phase-title { font-size: 0.82rem; font-weight: 700; color: #f7fafc; margin-bottom: 8px; }
+  .phase ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .phase li { font-size: 0.73rem; color: #a0aec0; padding-left: 14px; position: relative; line-height: 1.4; }
+  .phase li.done::before { content: "✓"; position: absolute; left: 0; color: #48bb78; }
+  .phase li.todo::before { content: "○"; position: absolute; left: 0; color: #4a5568; }
+
+  .section-title {
+    grid-column: 1 / -1;
+    font-size: 0.78rem; font-weight: 700; color: #718096;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 8px 0 2px; border-top: 1px solid #2d3748;
+  }
+  .section-title:first-child { border-top: none; padding-top: 0; }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .full-width { grid-column: 1; }
+    .backends, .gen-modes, .refuse-gates, .phases, .log-fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>RAG Project 系统架构</h1>
+<p class="subtitle">Retrieval-Augmented Generation · 知识问答 · 三阶段学习路径</p>
+
+<div class="badges">
+  <span class="badge badge-green">Phase 1 ✅ native MVP</span>
+  <span class="badge badge-blue">Phase 2 ✅ LlamaIndex 检索</span>
+  <span class="badge badge-purple">Phase 3 ✅ LangChain 生成</span>
+  <span class="badge badge-orange">FastAPI + ChromaDB + OpenAI</span>
+</div>
+
+<div class="layout">
+
+  <!-- ══ INGEST ════════════════════════════════════════════════ -->
+  <p class="section-title">Ingest Pipeline（文档写入）</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-green">📄</div>
+      <div>
+        <div class="card-title">文档解析</div>
+        <div class="card-subtitle">app/ingestion/parsers.py</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">格式识别 → 路由到解析器</div>
+          <div class="step-detail">按文件后缀自动识别，调用对应解析函数</div>
+          <span class="step-code">detect_file_type() → PARSER_MAP[type]</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">PDF（pdfplumber + PyMuPDF 兜底）</div>
+          <div class="step-detail">逐页提取文本 + 页码；pdfplumber 失败时自动切换 PyMuPDF</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">DOCX（保留章节结构）</div>
+          <div class="step-detail">Heading 样式触发章节切分，section_title 写入 metadata</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">XLSX / CSV / TXT / MD</div>
+          <div class="step-detail">XLSX 按 Sheet 切分；CSV 每 100 行一页；MD 按 H1/H2 切分</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">✓</div>
+        <div class="step-body">
+          <div class="step-title">统一输出格式</div>
+          <div class="step-detail">list[(text, page_num, section_title)]，与后续分块完全解耦</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-teal">✂️</div>
+      <div>
+        <div class="card-title">分块 + 嵌入 + 存储</div>
+        <div class="card-subtitle">chunker.py / pipeline.py / vector_store.py</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">文本分块（chunker.py）</div>
+          <div class="step-detail">RecursiveCharacterTextSplitter，chunk_size=512，overlap=64；格式感知分隔符（MD 按标题，表格按换行，正文按段落）</div>
+          <span class="step-code">chunk_id = MD5(source:page:char_start)[:8]</span>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">保存 JSONL 中间文件</div>
+          <div class="step-detail">data/processed/{stem}_chunks.jsonl，每行一个 chunk，含完整 metadata，方便调试</div>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">嵌入 + upsert</div>
+          <div class="step-detail">批量编码（batch_size=32），normalize=True 满足余弦相似度要求；upsert 保证重复 ingest 幂等，不产生重复数据</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RETRIEVAL ══════════════════════════════════════════════ -->
+  <p class="section-title">检索层（两个可切换的后端）</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-blue">🔍</div>
+      <div>
+        <div class="card-title">检索后端（工厂模式，RAG_BACKEND 切换）</div>
+        <div class="card-subtitle">retrieval/factory.py → vector_store.py 或 llamaindex_store.py · API 接口和生成层无需改动</div>
+      </div>
+    </div>
+    <div class="backends">
+      <div class="backend-card">
+        <div class="backend-title native-title">① native 后端（默认，RAG_BACKEND=native）</div>
+        <div class="backend-row"><span class="brow-key">嵌入模型</span><span class="brow-val">SentenceTransformer（本地，无 API 费用）</span></div>
+        <div class="backend-row"><span class="brow-key">存储</span><span class="brow-val">ChromaDB PersistentClient 直连</span></div>
+        <div class="backend-row"><span class="brow-key">相似度计算</span><span class="brow-val">余弦距离 d → score = 1 − d/2，范围 [0,1]</span></div>
+        <div class="backend-row"><span class="brow-key">检索</span><span class="brow-val">collection.query()，纯余弦相似度排序</span></div>
+        <div class="backend-row"><span class="brow-key">来源过滤</span><span class="brow-val"><code>where={"source": filename}</code></span></div>
+        <div class="backend-row"><span class="brow-key">学习价值</span><span class="brow-val">无框架封装，最直接理解 RAG 原理</span></div>
+      </div>
+      <div class="backend-card">
+        <div class="backend-title llamaindex-title">② llamaindex 后端（RAG_BACKEND=llamaindex）</div>
+        <div class="backend-row"><span class="brow-key">嵌入模型</span><span class="brow-val">HuggingFaceEmbedding（本地，同款模型）</span></div>
+        <div class="backend-row"><span class="brow-key">存储</span><span class="brow-val">ChromaVectorStore → VectorStoreIndex</span></div>
+        <div class="backend-row"><span class="brow-key">检索模式</span><span class="brow-val"><code>similarity</code>（纯相似度） / <code>mmr</code>（多样性）</span></div>
+        <div class="backend-row"><span class="brow-key">MMR 候选池</span><span class="brow-val">fetch_k = top_k × 4，从中做多样性筛选</span></div>
+        <div class="backend-row"><span class="brow-key">MMR 参数</span><span class="brow-val"><code>mmr_threshold</code>：0.0=最多样，1.0=最相关</span></div>
+        <div class="backend-row"><span class="brow-key">来源过滤</span><span class="brow-val">MetadataFilters + ExactMatchFilter</span></div>
+      </div>
+    </div>
+    <div style="margin-top:12px; padding:10px 14px; background:#0f1117; border-radius:8px; border:1px solid #2d3748; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <span style="font-size:0.75rem; color:#718096;">⚠ 切换后端后必须清空并重新 ingest（embedding 格式不兼容）：</span>
+      <code style="font-family:monospace; font-size:0.72rem; color:#f6ad55; background:#1a1f2e; padding:3px 8px; border-radius:4px;">rm -rf data/chroma/*</code>
+    </div>
+  </div>
+
+  <!-- ══ GENERATION ════════════════════════════════════════════ -->
+  <p class="section-title">生成层（LangChain LCEL + OpenAI）</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-purple">⚡</div>
+      <div>
+        <div class="card-title">生成模块（三种模式，同一个 Generator 类）</div>
+        <div class="card-subtitle">app/generation/generator.py · temperature=0.2（生成）/ temperature=0（改写）</div>
+      </div>
+    </div>
+    <div class="gen-modes">
+      <div class="gen-mode">
+        <div class="gen-mode-title">🔵 普通模式（/query）</div>
+        <ul>
+          <li>读取 Session 历史</li>
+          <li>rewrite_query()（有历史才调用 LLM）</li>
+          <li>向量检索（改写后的问题）</li>
+          <li>Pre-LLM 拒答判断</li>
+          <li>构建 Prompt + 注入 history</li>
+          <li>OpenAI SDK 同步调用</li>
+          <li>Post-LLM 拒答判断</li>
+          <li>写回 Session 历史</li>
+          <li>SQLite 日志记录</li>
+        </ul>
+      </div>
+      <div class="gen-mode">
+        <div class="gen-mode-title">🟢 流式模式（/stream）</div>
+        <ul>
+          <li>同上步骤①②③④</li>
+          <li>构建 LangChain message 列表</li>
+          <li>ChatOpenAI(streaming=True)</li>
+          <li>llm.astream(all_messages)</li>
+          <li>逐 token yield SSE 事件</li>
+          <li>格式：data: {json}\n\n</li>
+          <li>done 事件含 sources + session_id</li>
+          <li>流结束后写历史 + 日志</li>
+        </ul>
+      </div>
+      <div class="gen-mode">
+        <div class="gen-mode-title">🟣 多轮对话（+session_id）</div>
+        <ul>
+          <li>UUID → app.state.sessions 字典</li>
+          <li>滑动窗口：保留最近 5 轮（10条）</li>
+          <li>rewrite_query() 改写追问</li>
+          <li>历史转 SystemMessage / HumanMessage / AIMessage</li>
+          <li>注入到 messages 列表</li>
+          <li>拒答时记录 [拒答] 不污染历史</li>
+          <li>服务重启后 Session 清空</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REFUSAL ════════════════════════════════════════════════ -->
+  <p class="section-title">拒答机制（双重保险）</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-red">🚫</div>
+      <div>
+        <div class="card-title">Pre-LLM + Post-LLM 双重拒答</div>
+        <div class="card-subtitle">generator.py · _should_refuse() + INSUFFICIENT_EVIDENCE 前缀</div>
+      </div>
+    </div>
+    <div class="refuse-gates">
+      <div class="gate">
+        <div class="gate-title">第一道：Pre-LLM（分数阈值）</div>
+        <div class="gate-body">
+          检索完成后立即判断，<strong>不调用 LLM</strong>，响应速度极快（&lt;50ms）。<br><br>
+          • 知识库为空 → 拒答，提示用户先上传文档<br>
+          • <code>top_score &lt; 0.35</code>（SCORE_THRESHOLD）→ 拒答，返回分数和阈值<br><br>
+          优点：节省 Token，响应快，逻辑透明可调。<br>
+          阈值定义位置：<code>vector_store.py</code>
+        </div>
+      </div>
+      <div class="gate">
+        <div class="gate-title">第二道：Post-LLM（语义判断）</div>
+        <div class="gate-body">
+          LLM 生成后检查回答前缀，捕获分数过关但实质无关的情况。<br><br>
+          • System Prompt 要求 LLM 在上下文不足时回复 <code>INSUFFICIENT_EVIDENCE: 原因</code><br>
+          • 检测到该前缀 → 拒答，提取原因返回给用户<br><br>
+          优点：语义层面兜底，处理相似度数值虚高但内容不相关的边缘案例。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MEMORY ═════════════════════════════════════════════════ -->
+  <p class="section-title">多轮对话 Memory + Query Rewriting</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-purple">🧠</div>
+      <div>
+        <div class="card-title">Session 与 Memory 管理</div>
+        <div class="card-subtitle">routes.py · app.state.sessions 内存字典</div>
+      </div>
+    </div>
+    <div class="memory-flow">
+      <div class="mem-row">
+        <div class="mem-icon">🆔</div>
+        <div class="mem-body">
+          <div class="mem-title">Session 标识</div>
+          <div class="mem-detail">UUID 由前端生成，随每次请求传入 <code>session_id</code> 字段。不传 = 单次问答模式，行为与原来完全一致。</div>
+        </div>
+      </div>
+      <div class="mem-row">
+        <div class="mem-icon">📜</div>
+        <div class="mem-body">
+          <div class="mem-title">历史存储格式</div>
+          <div class="mem-detail"><code>[{"role":"user","content":"..."}, {"role":"assistant","content":"..."}]</code> 交替存储，与 OpenAI messages 格式完全一致。</div>
+        </div>
+      </div>
+      <div class="mem-row">
+        <div class="mem-icon">🪟</div>
+        <div class="mem-body">
+          <div class="mem-title">滑动窗口（MEMORY_WINDOW_K=5）</div>
+          <div class="mem-detail">超过 10 条消息时删最旧一轮（2条）。手动 list 切片实现，无额外依赖，Context 不会无限增长。</div>
+        </div>
+      </div>
+      <div class="mem-row">
+        <div class="mem-icon">💉</div>
+        <div class="mem-body">
+          <div class="mem-title">历史注入方式</div>
+          <div class="mem-detail">注入为真实 LangChain message 对象（<code>SystemMessage / HumanMessage / AIMessage</code>），不做字符串拼接。LLM 能正确理解对话结构和指代关系。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-purple">✏️</div>
+      <div>
+        <div class="card-title">Query Rewriting（检索前改写）</div>
+        <div class="card-subtitle">generator.py · rewrite_query() · LangChain LCEL</div>
+      </div>
+    </div>
+    <div class="memory-flow">
+      <div class="mem-row">
+        <div class="mem-icon">❓</div>
+        <div class="mem-body">
+          <div class="mem-title">为什么要在检索前改写</div>
+          <div class="mem-detail">追问"国际订单呢？"的向量语义极弱，直接检索命中率很低。改写为"国际订单的退款政策是什么？"后向量精准，检索结果才有意义。</div>
+        </div>
+      </div>
+      <div class="mem-row">
+        <div class="mem-icon">⚙️</div>
+        <div class="mem-body">
+          <div class="mem-title">实现</div>
+          <div class="mem-detail">LangChain LCEL chain：<code>prompt | ChatOpenAI(temperature=0) | StrOutputParser()</code>，异步 <code>ainvoke()</code>。temperature=0 保证改写确定性。</div>
+        </div>
+      </div>
+      <div class="mem-row">
+        <div class="mem-icon">⚡</div>
+        <div class="mem-body">
+          <div class="mem-title">优化策略</div>
+          <div class="mem-detail">无历史时直接返回原问题，跳过 LLM 调用（节省 Token）。改写失败时 fallback 原问题，不中断主流程。</div>
+        </div>
+      </div>
+    </div>
+    <div class="conv-example">
+      <div class="conv-label">对话 + 改写示例</div>
+      <div class="conv-turn"><span class="conv-q">Q1: "退款政策是什么？"</span></div>
+      <div class="conv-turn"><span class="conv-a">A1: "30天内可退，需保留小票..."</span></div>
+      <div class="conv-turn"><span class="conv-q">Q2（追问）: "国际订单呢？"</span></div>
+      <div class="conv-turn"><span class="conv-rewrite">→ 改写后检索: "国际订单的退款政策是什么？"</span></div>
+      <div class="conv-turn"><span class="conv-a">A2: "国际订单退款需90天内..."</span></div>
+      <div class="conv-turn"><span class="conv-q">Q3（追问）: "那第二条规则？"</span></div>
+      <div class="conv-turn"><span class="conv-rewrite">→ 改写后检索: "国际订单退款政策的第二条规则是什么？"</span></div>
+    </div>
+  </div>
+
+  <!-- ══ API ════════════════════════════════════════════════════ -->
+  <p class="section-title">API 接口</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-gray">🔌</div>
+      <div>
+        <div class="card-title">REST API（统一前缀 /api/v1）</div>
+        <div class="card-subtitle">app/api/routes.py · 交互文档：http://localhost:8000/docs</div>
+      </div>
+    </div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="ep-path">/ingest</span>
+        <span class="ep-desc">上传文档并 ingest（multipart/form-data）→ {filename, chunks_added, status}</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="ep-path">/query</span>
+        <span class="ep-desc">同步问答，支持 session_id → {answer, refused, refuse_reason, sources, latency_ms, session_id}</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="ep-path">/stream</span>
+        <span class="ep-desc">流式问答（SSE），支持 session_id → token 事件流 + done 事件（含 sources）</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="ep-path">/health</span>
+        <span class="ep-desc">健康检查 → {status: "ok"}</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="ep-path">/stats</span>
+        <span class="ep-desc">向量库统计 → {total_chunks, collection, model, active_sessions}</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-delete">DELETE</span>
+        <span class="ep-path">/document/{filename}</span>
+        <span class="ep-desc">删除某文档的所有 chunk（重新 ingest 前调用）</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-delete">DELETE</span>
+        <span class="ep-path">/session/{session_id}</span>
+        <span class="ep-desc">清空会话历史（前端"新对话"时调用）</span>
+      </div>
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="ep-path">/session/{session_id}</span>
+        <span class="ep-desc">查看会话历史（调试用）→ {turn_count, history}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DATA FLOW ══════════════════════════════════════════════ -->
+  <p class="section-title">完整数据流</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-teal">📦</div>
+      <div>
+        <div class="card-title">端到端数据流</div>
+        <div class="card-subtitle">Ingest 路径 + Query 路径</div>
+      </div>
+    </div>
+    <div style="margin-top:4px">
+      <div style="font-size:0.75rem; color:#718096; margin-bottom:10px; font-weight:600;">📥 Ingest 路径</div>
+      <div class="dataflow">
+        <div class="df-node"><div class="df-node-title">文档上传</div><div class="df-node-sub">POST /ingest</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">解析</div><div class="df-node-sub">parsers.py</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">分块</div><div class="df-node-sub">chunker.py</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">JSONL</div><div class="df-node-sub">processed/</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">嵌入</div><div class="df-node-sub">本地模型</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">ChromaDB</div><div class="df-node-sub">data/chroma/</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:#718096; margin:14px 0 10px; font-weight:600;">💬 Query 路径（多轮模式）</div>
+      <div class="dataflow">
+        <div class="df-node"><div class="df-node-title">用户提问</div><div class="df-node-sub">+session_id</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">读历史</div><div class="df-node-sub">app.state</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">改写问题</div><div class="df-node-sub">rewrite_query</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">检索</div><div class="df-node-sub">top-k chunks</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">拒答①</div><div class="df-node-sub">score&lt;0.35</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">LLM 生成</div><div class="df-node-sub">+history</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">拒答②</div><div class="df-node-sub">INSUFF…</div></div>
+        <div class="df-arrow">→</div>
+        <div class="df-node"><div class="df-node-title">写历史</div><div class="df-node-sub">+日志</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGGING ════════════════════════════════════════════════ -->
+  <p class="section-title">日志存储</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-orange">📋</div>
+      <div>
+        <div class="card-title">SQLite 查询日志</div>
+        <div class="card-subtitle">app/logging/db.py · SQLAlchemy ORM · data/logs/queries.db</div>
+      </div>
+    </div>
+    <div class="log-fields">
+      <div class="log-field"><div class="lf-key">timestamp</div><div class="lf-val">UTC 时间戳</div></div>
+      <div class="log-field"><div class="lf-key">query</div><div class="lf-val">用户原始问题</div></div>
+      <div class="log-field"><div class="lf-key">answer</div><div class="lf-val">LLM 回答（拒答时为 null）</div></div>
+      <div class="log-field"><div class="lf-key">refused / refuse_reason</div><div class="lf-val">是否拒答 + 具体原因</div></div>
+      <div class="log-field"><div class="lf-key">top_score</div><div class="lf-val">最高检索相似度分数</div></div>
+      <div class="log-field"><div class="lf-key">num_sources</div><div class="lf-val">引用了几个 chunk</div></div>
+      <div class="log-field"><div class="lf-key">sources_json</div><div class="lf-val">引用详情 JSON（source/page/score/rank）</div></div>
+      <div class="log-field"><div class="lf-key">latency_ms</div><div class="lf-val">端到端请求耗时</div></div>
+      <div class="log-field"><div class="lf-key">model</div><div class="lf-val">使用的 LLM 模型名</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-gray">🗄️</div>
+      <div>
+        <div class="card-title">共享资源生命周期</div>
+        <div class="card-subtitle">app/main.py · FastAPI lifespan · app.state</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">启</div>
+        <div class="step-body">
+          <div class="step-title">服务启动时初始化（只执行一次）</div>
+          <div class="step-detail">VectorStore（加载嵌入模型，开销大）、Generator（OpenAI client）、QueryLogger（SQLite 连接）、sessions 字典</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">用</div>
+        <div class="step-body">
+          <div class="step-title">所有请求共用同一实例</div>
+          <div class="step-detail">通过 <code>request.app.state.xxx</code> 注入，避免每次请求重新加载嵌入模型</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">关</div>
+        <div class="step-body">
+          <div class="step-title">服务关闭时清理</div>
+          <div class="step-detail">ChromaDB 持久化自动保存，SQLite 日志持久化，sessions 内存字典清空</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PHASES ═════════════════════════════════════════════════ -->
+  <p class="section-title">学习路径与进度</p>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-icon icon-green">🗺️</div>
+      <div>
+        <div class="card-title">三阶段学习路径</div>
+        <div class="card-subtitle">从原理到框架，逐步构建生产级 RAG 系统</div>
+      </div>
+    </div>
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 1</span>
+          <span class="phase-status status-done">✅ 完成</span>
+        </div>
+        <div class="phase-title">native MVP</div>
+        <ul>
+          <li class="done">文档解析（PDF/DOCX/XLSX/CSV/TXT/MD）</li>
+          <li class="done">RecursiveCharacterTextSplitter 分块</li>
+          <li class="done">SentenceTransformer 本地嵌入</li>
+          <li class="done">ChromaDB 余弦相似度检索</li>
+          <li class="done">Pre-LLM + Post-LLM 双重拒答</li>
+          <li class="done">引用来源（文件名 + 页码 + 章节）</li>
+          <li class="done">SQLite 查询日志（SQLAlchemy）</li>
+          <li class="done">FastAPI lifespan 资源管理</li>
+          <li class="done">Docker 多阶段构建 + compose</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 2</span>
+          <span class="phase-status status-done">✅ 完成</span>
+        </div>
+        <div class="phase-title">LlamaIndex 检索优化</div>
+        <ul>
+          <li class="done">LlamaIndex VectorStoreIndex 后端</li>
+          <li class="done">工厂模式（RAG_BACKEND 热切换）</li>
+          <li class="done">MMR 检索（相关性 + 多样性）</li>
+          <li class="done">fetch_k = top_k×4 候选池策略</li>
+          <li class="done">MetadataFilters 来源过滤</li>
+          <li class="done">评估脚本（Hit@k / MRR / 拒答率）</li>
+          <li class="todo">构建 qa_set.json 测试集</li>
+          <li class="todo">实际跑评估，对比两后端数据</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 3</span>
+          <span class="phase-status status-done">✅ 完成</span>
+        </div>
+        <div class="phase-title">LangChain 生成层增强</div>
+        <ul>
+          <li class="done">LangChain LCEL 流式输出（astream）</li>
+          <li class="done">FastAPI SSE StreamingResponse</li>
+          <li class="done">多轮对话 Memory（滑动窗口 k=5）</li>
+          <li class="done">Query Rewriting（检索前改写追问）</li>
+          <li class="done">历史注入为 message 对象</li>
+          <li class="done">前端 Chat UI（流式 + Session）</li>
+          <li class="todo">单元测试（parsers/chunker/拒答）</li>
+          <li class="todo">持久化 Session（Redis）</li>
+          <li class="todo">Reranker（Cross-Encoder 重排序）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center; margin-top:40px; padding:16px; color:#4a5568; font-size:0.75rem;">
+  RAG Project · FastAPI + ChromaDB + OpenAI + LangChain + LlamaIndex
+</div>
+
+</body>
+</html>

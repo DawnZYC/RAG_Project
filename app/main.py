@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.retrieval.vector_store import VectorStore
+from app.retrieval.factory import create_vector_store
 from app.generation.generator import Generator
 from app.logging.db import QueryLogger
 
@@ -37,8 +37,11 @@ def get_config() -> dict:
 
     return {
         "openai_api_key":  api_key,
+        "rag_backend":     os.getenv("RAG_BACKEND",      "native").lower(),
         "llm_model":       os.getenv("LLM_MODEL",       "gpt-4o-mini"),
         "embedding_model": os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"),
+        "retrieval_mode":  os.getenv("RETRIEVAL_MODE",  "similarity").lower(),
+        "mmr_threshold":   float(os.getenv("MMR_THRESHOLD", "0.7")),
         "chroma_dir":      Path(os.getenv("CHROMA_DIR",      "data/chroma")),
         "processed_dir":   Path(os.getenv("PROCESSED_DIR",   "data/processed")),
         "db_path":         Path(os.getenv("DB_PATH",         "data/logs/queries.db")),
@@ -56,17 +59,23 @@ async def lifespan(app: FastAPI):
     """
     logger.info("RAG 服务启动中...")
     config = get_config()
+    logger.info(f"当前 RAG 后端: {config['rag_backend']}")
 
-    app.state.vector_store = VectorStore(
+    app.state.vector_store = create_vector_store(
+        backend=config["rag_backend"],
         persist_dir=config["chroma_dir"],
         model_name=config["embedding_model"],
+        retrieval_mode=config["retrieval_mode"],
+        mmr_threshold=config["mmr_threshold"],
     )
     app.state.generator = Generator(
         api_key=config["openai_api_key"],
         model=config["llm_model"],
     )
-    app.state.query_logger = QueryLogger(db_path=config["db_path"])
+    app.state.query_logger  = QueryLogger(db_path=config["db_path"])
     app.state.processed_dir = config["processed_dir"]
+    app.state.rag_backend   = config["rag_backend"]
+    app.state.sessions      = {}   # session_id → 消息历史列表，服务重启后清空
 
     logger.info("RAG 服务就绪")
     yield

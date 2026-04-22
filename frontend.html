@@ -9,312 +9,461 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
+      background: #f0f2f5;
       color: #333;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px;
-    }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 24px;
-      color: #111;
-    }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #111; }
 
     .card {
       background: #fff;
-      border-radius: 8px;
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 1px solid #e4e4e7;
+      padding: 18px 20px;
+      margin-bottom: 16px;
     }
-
-    .card h2 {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 14px;
-      color: #444;
-    }
-
-    /* Stats bar */
-    .stats-bar {
+    .card-header {
       display: flex;
-      gap: 24px;
       align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
+    .card-header h2 { font-size: 14px; font-weight: 600; color: #444; }
 
-    .stat {
-      font-size: 14px;
-      color: #666;
-    }
-
-    .stat span {
-      font-weight: 600;
-      color: #111;
-    }
-
+    /* ── 按钮 ────────────────────────────────────────────────────────────── */
     .btn {
       padding: 7px 14px;
-      border-radius: 6px;
+      border-radius: 7px;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      transition: opacity 0.15s;
+      transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
     }
-
-    .btn:hover { opacity: 0.85; }
+    .btn:hover    { opacity: 0.85; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
     .btn-primary { background: #2563eb; color: #fff; }
-    .btn-danger  { background: #dc2626; color: #fff; }
-    .btn-ghost   { background: #f0f0f0; color: #333; }
+    .btn-stream  { background: #7c3aed; color: #fff; }
+    .btn-ghost   { background: #f4f4f5; color: #555; border: 1px solid #e4e4e7; }
+    .btn-danger  { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+    .btn-sm      { padding: 5px 10px; font-size: 12px; }
 
-    /* Upload */
+    /* ── Stats ───────────────────────────────────────────────────────────── */
+    .stats-bar { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .stat      { font-size: 13px; color: #666; }
+    .stat span { font-weight: 600; color: #111; }
+
+    /* ── Upload ──────────────────────────────────────────────────────────── */
     .upload-area {
-      border: 2px dashed #d0d0d0;
-      border-radius: 6px;
-      padding: 28px;
+      border: 2px dashed #d4d4d8;
+      border-radius: 8px;
+      padding: 24px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.15s;
-      margin-bottom: 12px;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 10px;
     }
-
     .upload-area:hover, .upload-area.drag-over {
       border-color: #2563eb;
+      background: #eff6ff;
     }
+    .upload-area p   { font-size: 13px; color: #999; margin-top: 5px; }
+    #file-input      { display: none; }
+    .file-name       { font-size: 12px; color: #2563eb; margin-bottom: 8px; }
 
-    .upload-area p { font-size: 14px; color: #888; margin-top: 6px; }
-
-    #file-input { display: none; }
-
-    .file-name {
-      font-size: 13px;
-      color: #2563eb;
-      margin-bottom: 10px;
+    /* ── 模式切换 ─────────────────────────────────────────────────────────── */
+    .mode-tabs { display: flex; gap: 6px; }
+    .mode-tab  {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid #e4e4e7; background: #f4f4f5; color: #666;
+      transition: all 0.15s;
     }
+    .mode-tab.active-normal { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .mode-tab.active-stream { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 
-    /* Query */
-    textarea {
-      width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-size: 14px;
-      resize: vertical;
+    /* ── 对话区域 ─────────────────────────────────────────────────────────── */
+    .chat-section { display: flex; flex-direction: column; gap: 0; }
+
+    /* 对话历史 */
+    .chat-history {
       min-height: 80px;
-      margin-bottom: 10px;
-      font-family: inherit;
-    }
-
-    textarea:focus { outline: none; border-color: #2563eb; }
-
-    .query-options {
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 4px 0 12px;
       display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-history:empty::before {
+      content: "暂无对话记录，输入问题开始对话";
+      color: #aaa;
+      font-size: 13px;
+      text-align: center;
+      padding-top: 24px;
+      display: block;
     }
 
-    .query-options label { font-size: 13px; color: #666; }
+    /* 每轮对话 */
+    .chat-turn { display: flex; flex-direction: column; gap: 8px; }
 
-    .query-options input[type="number"] {
-      width: 60px;
-      padding: 5px 8px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+    /* 用户气泡 */
+    .bubble-user {
+      align-self: flex-end;
+      max-width: 75%;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 14px 14px 3px 14px;
+      padding: 10px 14px;
       font-size: 14px;
+      line-height: 1.55;
     }
 
-    .query-options input[type="text"] {
-      padding: 5px 8px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+    /* 助手气泡 */
+    .bubble-ai {
+      align-self: flex-start;
+      max-width: 85%;
+      background: #f4f4f5;
+      border: 1px solid #e4e4e7;
+      border-radius: 3px 14px 14px 14px;
+      padding: 12px 14px;
       font-size: 14px;
-      width: 180px;
-    }
-
-    /* Result */
-    .result-box {
-      background: #f9f9f9;
-      border: 1px solid #e5e5e5;
-      border-radius: 6px;
-      padding: 14px;
-      font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.65;
       white-space: pre-wrap;
       word-break: break-word;
     }
-
-    .refused {
+    .bubble-ai.refused {
       background: #fff7ed;
       border-color: #fed7aa;
       color: #9a3412;
     }
-
-    .sources-list {
-      margin-top: 14px;
+    /* 流式光标 */
+    .bubble-ai.streaming::after {
+      content: "▍";
+      display: inline-block;
+      animation: blink 0.75s step-end infinite;
+      color: #7c3aed;
+      margin-left: 1px;
     }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    .sources-list h3 {
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 8px;
+    /* 来源列表（折叠在气泡下方） */
+    .sources-block { align-self: flex-start; max-width: 85%; width: 100%; }
+    .sources-toggle {
+      font-size: 12px; color: #2563eb; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 4px; margin-left: 2px;
+      user-select: none;
     }
-
+    .sources-toggle:hover { text-decoration: underline; }
+    .sources-inner { margin-top: 6px; display: none; }
+    .sources-inner.open { display: block; }
     .source-item {
-      background: #f0f4ff;
+      background: #eff6ff;
       border-left: 3px solid #2563eb;
-      border-radius: 4px;
-      padding: 8px 10px;
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-
-    .source-item .source-meta {
-      color: #2563eb;
-      font-weight: 500;
-      margin-bottom: 3px;
-    }
-
-    .source-item .source-excerpt {
-      color: #555;
-      line-height: 1.5;
-    }
-
-    .latency {
+      border-radius: 5px;
+      padding: 7px 10px;
+      margin-bottom: 5px;
       font-size: 12px;
-      color: #aaa;
-      margin-top: 10px;
-      text-align: right;
+    }
+    .source-meta    { color: #2563eb; font-weight: 500; margin-bottom: 2px; }
+    .source-excerpt { color: #555; line-height: 1.5; }
+
+    /* Rewrite 提示 */
+    .rewrite-hint {
+      align-self: flex-start;
+      font-size: 11px;
+      color: #a855f7;
+      margin-left: 4px;
+      margin-top: -4px;
+      font-style: italic;
     }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 10px 16px;
-      border-radius: 6px;
+    /* 耗时 */
+    .turn-latency {
+      align-self: flex-start;
+      font-size: 11px;
+      color: #bbb;
+      margin-left: 4px;
+    }
+
+    /* ── 输入区 ───────────────────────────────────────────────────────────── */
+    .input-area {
+      border-top: 1px solid #e4e4e7;
+      padding-top: 14px;
+      margin-top: 8px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    textarea {
+      flex: 1;
+      border: 1px solid #d4d4d8;
+      border-radius: 8px;
+      padding: 10px 12px;
       font-size: 14px;
-      color: #fff;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-      z-index: 999;
+      resize: none;
+      min-height: 44px;
+      max-height: 140px;
+      font-family: inherit;
+      line-height: 1.5;
+      overflow-y: auto;
+    }
+    textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px #dbeafe; }
+
+    .input-options {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .input-options label { font-size: 12px; color: #777; }
+    .input-options input[type="number"] {
+      width: 52px; padding: 4px 7px; border: 1px solid #d4d4d8;
+      border-radius: 5px; font-size: 13px;
+    }
+    .input-options input[type="text"] {
+      padding: 4px 7px; border: 1px solid #d4d4d8;
+      border-radius: 5px; font-size: 13px; width: 160px;
     }
 
-    .toast.show { opacity: 1; }
-    .toast.success { background: #16a34a; }
-    .toast.error   { background: #dc2626; }
+    /* ── Session 状态栏 ───────────────────────────────────────────────────── */
+    .session-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #888;
+    }
+    .session-id-badge {
+      font-family: monospace;
+      background: #f4f4f5;
+      border: 1px solid #e4e4e7;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: #555;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
+    /* ── Loading ──────────────────────────────────────────────────────────── */
     .loading {
       display: inline-block;
-      width: 14px;
-      height: 14px;
+      width: 13px; height: 13px;
       border: 2px solid #fff;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
-      margin-right: 6px;
+      margin-right: 5px;
       vertical-align: middle;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; color: #fff;
+      opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; z-index: 999;
+    }
+    .toast.show    { opacity: 1; }
+    .toast.success { background: #16a34a; }
+    .toast.error   { background: #dc2626; }
   </style>
 </head>
 <body>
 <div class="container">
   <h1>RAG 测试面板</h1>
 
-  <!-- Stats -->
+  <!-- ── Stats ──────────────────────────────────────────────────────────── -->
   <div class="card">
-    <h2>系统状态</h2>
+    <div class="card-header">
+      <h2>系统状态</h2>
+      <button class="btn btn-ghost btn-sm" onclick="loadStats()">刷新</button>
+    </div>
     <div class="stats-bar">
       <div class="stat">向量库 chunk 数：<span id="chunk-count">-</span></div>
       <div class="stat">嵌入模型：<span id="model-name">-</span></div>
-      <button class="btn btn-ghost" onclick="loadStats()">刷新</button>
+      <div class="stat">活跃会话：<span id="active-sessions">-</span></div>
     </div>
   </div>
 
-  <!-- Upload -->
+  <!-- ── Upload ─────────────────────────────────────────────────────────── -->
   <div class="card">
-    <h2>上传文档</h2>
-    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
-      <div style="font-size: 28px;">📄</div>
-      <p>点击选择文件，或拖拽文件到此处</p>
-      <p>支持：PDF、DOCX、XLSX、CSV、TXT、MD</p>
+    <div class="card-header"><h2>上传文档</h2></div>
+    <div class="upload-area" id="upload-area"
+         onclick="document.getElementById('file-input').click()">
+      <div style="font-size:26px">📄</div>
+      <p>点击选择文件，或拖拽到此处</p>
+      <p>支持：PDF · DOCX · XLSX · CSV · TXT · MD</p>
     </div>
     <input type="file" id="file-input" accept=".pdf,.docx,.xlsx,.csv,.txt,.md">
     <div class="file-name" id="file-name"></div>
-    <button class="btn btn-primary" id="ingest-btn" onclick="ingestFile()" disabled>上传并 Ingest</button>
+    <button class="btn btn-primary" id="ingest-btn" onclick="ingestFile()" disabled>
+      上传并 Ingest
+    </button>
   </div>
 
-  <!-- Query -->
+  <!-- ── 对话区域 ────────────────────────────────────────────────────────── -->
   <div class="card">
-    <h2>提问</h2>
-    <textarea id="question" placeholder="输入你的问题..."></textarea>
-    <div class="query-options">
-      <label>Top K：<input type="number" id="top-k" value="5" min="1" max="20"></label>
-      <label>限定文件：<input type="text" id="filter-source" placeholder="可选，如 report.pdf"></label>
+    <div class="card-header">
+      <h2>对话</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="mode-tabs">
+          <div class="mode-tab active-normal" id="tab-normal" onclick="setMode('normal')">⚡ 普通</div>
+          <div class="mode-tab" id="tab-stream" onclick="setMode('stream')">🌊 流式</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="newSession()">＋ 新对话</button>
+      </div>
     </div>
-    <button class="btn btn-primary" id="query-btn" onclick="queryRAG()">提问</button>
-  </div>
 
-  <!-- Result -->
-  <div class="card" id="result-card" style="display:none;">
-    <h2>回答</h2>
-    <div class="result-box" id="result-box"></div>
-    <div class="sources-list" id="sources-list"></div>
-    <div class="latency" id="latency"></div>
+    <!-- Session 状态栏 -->
+    <div class="session-bar">
+      <span>会话 ID：</span>
+      <span class="session-id-badge" id="session-badge">（单次问答模式）</span>
+      <span id="turn-count" style="color:#aaa"></span>
+    </div>
+
+    <!-- 对话历史 -->
+    <div class="chat-section">
+      <div class="chat-history" id="chat-history"></div>
+
+      <!-- 输入区 -->
+      <div class="input-area">
+        <div class="input-options">
+          <label>Top K：<input type="number" id="top-k" value="5" min="1" max="20"></label>
+          <label>限定文件：<input type="text" id="filter-source" placeholder="可选，如 report.pdf"></label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="checkbox" id="use-session" onchange="toggleSession()">
+            <span>开启多轮对话</span>
+          </label>
+        </div>
+        <div class="input-row">
+          <textarea id="question" placeholder="输入问题... (Cmd+Enter 发送)" rows="1"
+                    oninput="autoResize(this)"></textarea>
+          <button class="btn btn-primary" id="send-btn" onclick="submitQuery()">发送</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = "http://localhost:8000/api/v1";
+  const API          = "http://localhost:8000/api/v1";
+  let   currentMode  = "normal";   // "normal" | "stream"
+  let   sessionId    = null;        // null = 单次问答
+  let   turnCount    = 0;
+  let   isSubmitting = false;
 
-  // ── 工具函数 ──────────────────────────────────────────────────────────────
+  // ── 工具 ────────────────────────────────────────────────────────────────
 
   function showToast(msg, type = "success") {
     const t = document.getElementById("toast");
     t.textContent = msg;
     t.className = `toast ${type} show`;
-    setTimeout(() => t.className = "toast", 2500);
+    setTimeout(() => t.className = "toast", 2800);
   }
 
-  function setLoading(btnId, loading, originalText) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = loading;
-    btn.innerHTML = loading
-      ? `<span class="loading"></span>处理中...`
-      : originalText;
+  function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 140) + "px";
   }
 
-  // ── 系统状态 ──────────────────────────────────────────────────────────────
+  function setSubmitting(flag) {
+    isSubmitting = flag;
+    const btn = document.getElementById("send-btn");
+    btn.disabled = flag;
+    btn.innerHTML = flag
+      ? `<span class="loading"></span>生成中`
+      : "发送";
+  }
+
+  // ── 模式切换 ─────────────────────────────────────────────────────────────
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById("tab-normal").className =
+      "mode-tab" + (mode === "normal" ? " active-normal" : "");
+    document.getElementById("tab-stream").className =
+      "mode-tab" + (mode === "stream" ? " active-stream" : "");
+    document.getElementById("send-btn").className =
+      "btn " + (mode === "stream" ? "btn-stream" : "btn-primary");
+  }
+
+  // ── Session 管理 ──────────────────────────────────────────────────────────
+
+  function toggleSession() {
+    const checked = document.getElementById("use-session").checked;
+    if (checked) {
+      if (!sessionId) {
+        // 生成新 UUID（随机，不需要后端）
+        sessionId = crypto.randomUUID();
+      }
+      updateSessionBadge();
+      showToast("已开启多轮对话模式");
+    } else {
+      sessionId = null;
+      document.getElementById("session-badge").textContent = "（单次问答模式）";
+      document.getElementById("turn-count").textContent = "";
+    }
+  }
+
+  function updateSessionBadge() {
+    const badge = document.getElementById("session-badge");
+    badge.textContent = sessionId
+      ? sessionId.slice(0, 8) + "..."
+      : "（单次问答模式）";
+    document.getElementById("turn-count").textContent =
+      sessionId ? `已进行 ${turnCount} 轮` : "";
+  }
+
+  async function newSession() {
+    // 清空服务端历史
+    if (sessionId) {
+      try {
+        await fetch(`${API}/session/${sessionId}`, { method: "DELETE" });
+      } catch {}
+    }
+
+    // 重置状态
+    const wasEnabled = document.getElementById("use-session").checked;
+    sessionId  = wasEnabled ? crypto.randomUUID() : null;
+    turnCount  = 0;
+
+    // 清空对话界面
+    document.getElementById("chat-history").innerHTML = "";
+    updateSessionBadge();
+    loadStats();
+    showToast("新对话已开始");
+  }
+
+  // ── Stats ────────────────────────────────────────────────────────────────
 
   async function loadStats() {
     try {
       const res  = await fetch(`${API}/stats`);
       const data = await res.json();
-      document.getElementById("chunk-count").textContent = data.total_chunks;
-      document.getElementById("model-name").textContent  = data.model;
+      document.getElementById("chunk-count").textContent    = data.total_chunks;
+      document.getElementById("model-name").textContent     = data.model;
+      document.getElementById("active-sessions").textContent = data.active_sessions ?? "-";
     } catch {
-      document.getElementById("chunk-count").textContent = "无法连接服务";
+      document.getElementById("chunk-count").textContent = "连接失败";
     }
   }
 
-  // ── 文件选择 ──────────────────────────────────────────────────────────────
+  // ── Upload ───────────────────────────────────────────────────────────────
 
   document.getElementById("file-input").addEventListener("change", function () {
     const file = this.files[0];
@@ -324,13 +473,9 @@
     }
   });
 
-  // 拖拽上传
   const uploadArea = document.getElementById("upload-area");
-  uploadArea.addEventListener("dragover", e => {
-    e.preventDefault();
-    uploadArea.classList.add("drag-over");
-  });
-  uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("drag-over"));
+  uploadArea.addEventListener("dragover",  e => { e.preventDefault(); uploadArea.classList.add("drag-over"); });
+  uploadArea.addEventListener("dragleave", ()  => uploadArea.classList.remove("drag-over"));
   uploadArea.addEventListener("drop", e => {
     e.preventDefault();
     uploadArea.classList.remove("drag-over");
@@ -342,98 +487,286 @@
     }
   });
 
-  // ── Ingest ────────────────────────────────────────────────────────────────
-
   async function ingestFile() {
     const file = document.getElementById("file-input").files[0];
     if (!file) return;
 
-    setLoading("ingest-btn", true);
-
-    const form = new FormData();
-    form.append("file", file);
+    const btn = document.getElementById("ingest-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loading"></span>处理中`;
 
     try {
+      const form = new FormData();
+      form.append("file", file);
       const res  = await fetch(`${API}/ingest`, { method: "POST", body: form });
       const data = await res.json();
-
       if (res.ok) {
-        showToast(`✅ ${data.filename} 已 ingest，共 ${data.chunks_added} 个 chunk`);
+        showToast(`✅ ${data.filename} ingested，${data.chunks_added} 个 chunk`);
         loadStats();
       } else {
         showToast(`❌ ${data.detail}`, "error");
       }
-    } catch (e) {
-      showToast("❌ 无法连接服务，请确认服务已启动", "error");
+    } catch {
+      showToast("❌ 无法连接服务", "error");
     }
 
-    setLoading("ingest-btn", false, "上传并 Ingest");
+    btn.disabled = false;
+    btn.innerHTML = "上传并 Ingest";
   }
 
-  // ── Query ─────────────────────────────────────────────────────────────────
+  // ── 对话 UI 构建函数 ────────────────────────────────────────────────────
 
-  async function queryRAG() {
-    const question = document.getElementById("question").value.trim();
-    if (!question) { showToast("请输入问题", "error"); return; }
+  /**
+   * 在对话历史里追加一轮对话的用户气泡
+   * 返回助手气泡的 DOM 元素（供后续填充内容）
+   */
+  function appendUserBubble(question, rewrittenQuery) {
+    const history = document.getElementById("chat-history");
 
-    setLoading("query-btn", true);
-    document.getElementById("result-card").style.display = "none";
+    const turn = document.createElement("div");
+    turn.className = "chat-turn";
 
-    const body = {
-      question,
-      top_k: parseInt(document.getElementById("top-k").value),
-      filter_source: document.getElementById("filter-source").value.trim() || null,
+    // 用户气泡
+    const userBubble = document.createElement("div");
+    userBubble.className = "bubble-user";
+    userBubble.textContent = question;
+    turn.appendChild(userBubble);
+
+    // 如果有 Query Rewriting，显示改写提示
+    if (rewrittenQuery && rewrittenQuery !== question) {
+      const hint = document.createElement("div");
+      hint.className = "rewrite-hint";
+      hint.textContent = `✦ 改写为：「${rewrittenQuery}」`;
+      turn.appendChild(hint);
+    }
+
+    history.appendChild(turn);
+    return turn;
+  }
+
+  /**
+   * 在已有的 turn 里追加助手气泡，返回气泡元素
+   */
+  function appendAIBubble(turn, isStreaming = false) {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble-ai" + (isStreaming ? " streaming" : "");
+    turn.appendChild(bubble);
+
+    // 滚动到底部
+    const history = document.getElementById("chat-history");
+    history.scrollTop = history.scrollHeight;
+
+    return bubble;
+  }
+
+  /**
+   * 在 turn 里追加来源列表（可折叠）
+   */
+  function appendSources(turn, sources) {
+    if (!sources || sources.length === 0) return;
+
+    const block = document.createElement("div");
+    block.className = "sources-block";
+
+    const toggle = document.createElement("div");
+    toggle.className = "sources-toggle";
+    toggle.innerHTML = `▸ 查看 ${sources.length} 个引用来源`;
+
+    const inner = document.createElement("div");
+    inner.className = "sources-inner";
+    inner.innerHTML = sources.map(s => `
+      <div class="source-item">
+        <div class="source-meta">
+          📄 ${s.source}
+          ${s.page_num  ? `· 第 ${s.page_num} 页` : ""}
+          ${s.section_title ? `· ${s.section_title}` : ""}
+          · ${(s.score * 100).toFixed(1)}%
+        </div>
+        <div class="source-excerpt">${s.excerpt}</div>
+      </div>
+    `).join("");
+
+    toggle.onclick = () => {
+      const isOpen = inner.classList.toggle("open");
+      toggle.innerHTML = `${isOpen ? "▾" : "▸"} ${isOpen ? "收起" : "查看"} ${sources.length} 个引用来源`;
     };
 
+    block.appendChild(toggle);
+    block.appendChild(inner);
+    turn.appendChild(block);
+  }
+
+  /**
+   * 追加耗时标注
+   */
+  function appendLatency(turn, ms, mode) {
+    const el = document.createElement("div");
+    el.className = "turn-latency";
+    el.textContent = `${Math.round(ms)} ms${mode === "stream" ? "（流式）" : ""}`;
+    turn.appendChild(el);
+  }
+
+  // ── 提交路由 ─────────────────────────────────────────────────────────────
+
+  function submitQuery() {
+    if (isSubmitting) return;
+    const q = document.getElementById("question").value.trim();
+    if (!q) { showToast("请输入问题", "error"); return; }
+    currentMode === "stream" ? queryStream(q) : queryNormal(q);
+  }
+
+  function buildRequestBody(question) {
+    return {
+      question,
+      top_k:         parseInt(document.getElementById("top-k").value),
+      filter_source: document.getElementById("filter-source").value.trim() || null,
+      session_id:    sessionId,   // null = 单次问答
+    };
+  }
+
+  function clearInput() {
+    const ta = document.getElementById("question");
+    ta.value = "";
+    ta.style.height = "auto";
+  }
+
+  // ── 普通模式 ─────────────────────────────────────────────────────────────
+
+  async function queryNormal(question) {
+    setSubmitting(true);
+    clearInput();
+
+    const turn = appendUserBubble(question);
+    const aiBubble = appendAIBubble(turn);
+    aiBubble.textContent = "生成中…";
+
+    const t0 = Date.now();
     try {
       const res  = await fetch(`${API}/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(buildRequestBody(question)),
       });
       const data = await res.json();
 
-      document.getElementById("result-card").style.display = "block";
-
-      const resultBox = document.getElementById("result-box");
       if (data.refused) {
-        resultBox.className = "result-box refused";
-        resultBox.textContent = `⚠️ 拒答\n\n${data.refuse_reason}`;
+        aiBubble.className = "bubble-ai refused";
+        aiBubble.textContent = `⚠️ 拒答\n\n${data.refuse_reason}`;
       } else {
-        resultBox.className = "result-box";
-        resultBox.textContent = data.answer;
+        aiBubble.className = "bubble-ai";
+        aiBubble.textContent = data.answer;
+        appendSources(turn, data.sources);
       }
 
-      // 来源列表
-      const sourcesList = document.getElementById("sources-list");
-      if (data.sources && data.sources.length > 0) {
-        sourcesList.innerHTML = `<h3>引用来源</h3>` + data.sources.map(s => `
-          <div class="source-item">
-            <div class="source-meta">
-              📄 ${s.source}
-              ${s.page_num ? `· 第 ${s.page_num} 页` : ""}
-              ${s.section_title ? `· ${s.section_title}` : ""}
-              · 相关度 ${(s.score * 100).toFixed(1)}%
-            </div>
-            <div class="source-excerpt">${s.excerpt}</div>
-          </div>
-        `).join("");
-      } else {
-        sourcesList.innerHTML = "";
+      appendLatency(turn, Date.now() - t0, "normal");
+
+      // 如果服务端返回了 session_id（首次），同步一下本地
+      if (data.session_id) {
+        sessionId = data.session_id;
+        turnCount++;
+        updateSessionBadge();
       }
 
-      document.getElementById("latency").textContent = `耗时 ${data.latency_ms} ms`;
-
-    } catch (e) {
-      showToast("❌ 无法连接服务，请确认服务已启动", "error");
+    } catch {
+      aiBubble.className = "bubble-ai refused";
+      aiBubble.textContent = "❌ 无法连接服务，请确认服务已启动";
     }
 
-    setLoading("query-btn", false, "提问");
+    setSubmitting(false);
+    document.getElementById("chat-history").scrollTop = 9999;
   }
 
-  // 回车提交
+  // ── 流式模式 ─────────────────────────────────────────────────────────────
+
+  async function queryStream(question) {
+    setSubmitting(true);
+    clearInput();
+
+    const turn     = appendUserBubble(question);
+    const aiBubble = appendAIBubble(turn, true);  // streaming 光标
+
+    const t0 = Date.now();
+    try {
+      const res = await fetch(`${API}/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildRequestBody(question)),
+      });
+
+      if (!res.ok) {
+        aiBubble.classList.remove("streaming");
+        aiBubble.className = "bubble-ai refused";
+        aiBubble.textContent = `❌ 请求失败 (${res.status})`;
+        setSubmitting(false);
+        return;
+      }
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = "";
+      let   gotRewrittenQuery = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop();   // 最后一段可能不完整
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          let event;
+          try { event = JSON.parse(part.slice(6)); } catch { continue; }
+
+          if (event.type === "token") {
+            aiBubble.textContent += event.content;
+            document.getElementById("chat-history").scrollTop = 9999;
+
+          } else if (event.type === "done") {
+            aiBubble.classList.remove("streaming");
+
+            if (event.refused) {
+              aiBubble.className = "bubble-ai refused";
+              aiBubble.textContent = `⚠️ 拒答\n\n${event.reason}`;
+            } else {
+              appendSources(turn, event.sources);
+            }
+
+            appendLatency(turn, Date.now() - t0, "stream");
+
+            // 同步 session_id
+            if (event.session_id) {
+              sessionId = event.session_id;
+              turnCount++;
+              updateSessionBadge();
+            }
+
+          } else if (event.type === "error") {
+            aiBubble.classList.remove("streaming");
+            aiBubble.className = "bubble-ai refused";
+            aiBubble.textContent = `❌ 错误：${event.message}`;
+          }
+        }
+      }
+
+    } catch {
+      aiBubble.classList.remove("streaming");
+      aiBubble.className = "bubble-ai refused";
+      aiBubble.textContent = "❌ 无法连接服务，请确认服务已启动";
+    }
+
+    setSubmitting(false);
+  }
+
+  // ── 快捷键 ───────────────────────────────────────────────────────────────
+
   document.getElementById("question").addEventListener("keydown", e => {
-    if (e.key === "Enter" && e.metaKey) queryRAG();
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      submitQuery();
+    }
+    // Enter 换行（不 Cmd/Ctrl）
   });
 
   // 初始化

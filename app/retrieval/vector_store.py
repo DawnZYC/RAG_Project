@@ -5,7 +5,7 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Protocol
 
 import chromadb
 from chromadb.config import Settings
@@ -21,6 +21,32 @@ DEFAULT_COLLECTION = "rag_documents"
 DEFAULT_MODEL_NAME = "BAAI/bge-small-en-v1.5"  # 中文文档换成 bge-small-zh-v1.5
 DEFAULT_TOP_K      = 5
 SCORE_THRESHOLD    = 0.35  # 低于这个分数 → 触发拒答
+
+
+class VectorStoreBackend(Protocol):
+    """
+    所有检索后端都需要遵循的统一接口。
+    """
+
+    collection_name: str
+    model_name: str
+
+    def upsert(self, chunks: list[ChunkDoc]) -> None:
+        ...
+
+    def search(
+        self,
+        query: str,
+        top_k: int = DEFAULT_TOP_K,
+        filter_source: Optional[str] = None,
+    ) -> list[RetrievedChunk]:
+        ...
+
+    def count(self) -> int:
+        ...
+
+    def delete_by_source(self, source: str) -> None:
+        ...
 
 
 class VectorStore:
